@@ -9,7 +9,7 @@ import pandas as pd
 
 class BasicDescriber(ProductDescriberInterface):
 
-    def __init__(self, date_start: datetime, date_end: datetime, granularity: int, quote_currency: str):
+    def __init__(self, date_start: datetime, granularity: int, quote_currency: str):
         self.date_start = date_start
         self.date_end = date_start + timedelta(hours=15)
         self.granularity = granularity
@@ -56,7 +56,7 @@ class BasicDescriber(ProductDescriberInterface):
                 continue
 
             # get dataframe of product historic rates with moving average
-            df_product_historic_rates = self.get_df_from_product_historic_rates(product_historic_rates)
+            df_product_historic_rates = self.get_df_from_product_historic_rates(currency_pair_id)
 
             # get currency_pair_dict
             currency_pair_dict = self.get_currency_pair_stat_dict(currency_pair_id, df_product_historic_rates)
@@ -112,11 +112,11 @@ class BasicDescriber(ProductDescriberInterface):
 
     #region Product historic rates
 
-    def get_df_from_product_historic_rates(self, product_historic_rates):
+    def get_df_from_product_historic_rates(self, currency_pair_id):
 
         # get dataframe
-        df_product_historic_rates = UtilsDfProductHistoricRates.get_df_from_product_historic_rates(
-            product_historic_rates,
+        df_product_historic_rates = UtilsDfProductHistoricRates.get_df_price_history(
+            currency_pair_id,
             date_start=self.date_start,
             date_end=self.date_end,
             granularity=self.granularity

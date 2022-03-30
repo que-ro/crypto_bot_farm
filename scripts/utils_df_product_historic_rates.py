@@ -7,6 +7,68 @@ import pandas as pd
 
 class UtilsDfProductHistoricRates:
 
+    @staticmethod
+    def get_df_price_history(currency_pair_id, date_start, date_end, granularity):
+
+        assert granularity==300, "At the moment only a granularity of 300s is implemented"
+
+        #init cbpro api client
+        public_client = cbpro.PublicClient()
+
+        #init dataframe of price history
+        df_price_history =None
+
+        #get nb of hours between date
+        hours_btwn_dates = (date_end - date_start).total_seconds() / 3600
+
+        #get nb of times the loop should be called
+        nb_times_loop = math.floor(hours_btwn_dates / 15)
+
+        #loop 15h by 15h (get 180 ticks per 180 ticks) (max 200 ticks can be retrieved per call of the api)
+        for idx in range (0, nb_times_loop):
+            date1 = date_start + timedelta(hours=15 * idx)
+            date2 = date_start + timedelta(hours=15 * (idx + 1))
+
+            list_price_history = public_client.get_product_historic_rates(product_id=currency_pair_id,
+                                                     start=date1,
+                                                     end=date2,
+                                                     granularity=granularity)
+
+            if(df_price_history is None):
+                df_price_history = UtilsDfProductHistoricRates.get_df_from_product_historic_rates(list_price_history, date1, date2, granularity)
+            else:
+                df_price_history = pd.concat([
+                    df_price_history,
+                    UtilsDfProductHistoricRates.get_df_from_product_historic_rates(
+                        list_price_history, date1, date2, granularity)
+                ])
+
+        #get last ticks
+        hours_not_yet_retrieved = hours_btwn_dates % 15
+        if(hours_not_yet_retrieved != 0):
+            date1 = date_end - timedelta(hours=hours_not_yet_retrieved)
+            date2 = date_end
+            list_price_history = public_client.get_product_historic_rates(product_id=currency_pair_id,
+                                                                               start=date1,
+                                                                               end=date2,
+                                                                               granularity=granularity)
+            df_price_history = pd.concat([
+                df_price_history,
+                UtilsDfProductHistoricRates.get_df_from_product_historic_rates(
+                    list_price_history, date1, date2, granularity)
+            ])
+
+        #get rid of biased index
+        df_price_history = df_price_history.reset_index()
+        df_price_history = df_price_history.drop('index', axis=1)
+
+        #return complete dataframe
+        return df_price_history
+
+
+
+
+
     """Return dataframe from array of product historic rates from cbpro"""
     @staticmethod
     def get_df_from_product_historic_rates(product_historic_rates, date_start, date_end, granularity):

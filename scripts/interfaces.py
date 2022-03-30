@@ -23,3 +23,12 @@ class StrategyRunnerInterface:
     def get_df_product_with_strat_result(self) -> object:
         """Return dataframe of products with results of the strategy"""
         pass
+
+
+class StrategyResultLabeller:
+
+    @staticmethod
+    def get_df_product_with_strat_result_label(self) -> object:
+        """Return dataframe of products with label column ("result_label") containing 0 or 1
+        which describe the success of the strategy"""
+        pass
