@@ -9,13 +9,19 @@ from utils_df_product_historic_rates import UtilsDfProductHistoricRates
 
 class BasicStrategyRunner(StrategyRunnerInterface):
 
-    def __init__(self, date_start: datetime, date_prior_used_to_describe: datetime, granularity, df_products: object):
+    def __init__(self, date_start: datetime, granularity, df_products: object):
+
+        # if granularity = 300
+        self.time_needed_for_process = timedelta(hours=45)
 
         #init dates
         self.date_start = date_start
         self.date_stop_active_trading = self.date_start + timedelta(hours=15)
         self.date_wait_until = self.date_stop_active_trading + timedelta(hours=30)
-        self.date_prior_start = date_prior_used_to_describe
+
+        #date prior to start depending on granularity
+        #if(granularity == 300):
+        self.date_prior_start = self.date_start - timedelta(hours=15)
 
         #init granularity
         self.granularity = granularity
@@ -36,6 +42,17 @@ class BasicStrategyRunner(StrategyRunnerInterface):
             raise ValueError('Only 300s intervals are supported at the moment')
         if (date_start + timedelta(hours=45) > datetime.now()):
             raise ValueError('The strategy is spread on 45 hours. The start date should be thus be 45h anterior to now')
+
+    @staticmethod
+    def time_needed_for_process(granularity):
+        assert granularity == 300, 'Only 300s intervals are supported at the moment'
+
+        # if granylarity = 300:
+        return timedelta(hours=45)
+
+    @staticmethod
+    def get_name() -> str:
+        return 'BasicStrategyRunner'
 
     def get_df_product_with_strat_result(self) -> object:
 
@@ -128,7 +145,7 @@ class BasicStrategyRunner(StrategyRunnerInterface):
         best_pct_profit_btwn_trades = pct_profit_btwn_trades
         previous_gain_loss = gain_loss
 
-        print('pct profit between trades : ' + str(pct_profit_btwn_trades) + ' | gainloss = ' + str(gain_loss))
+        #print('pct profit between trades : ' + str(pct_profit_btwn_trades) + ' | gainloss = ' + str(gain_loss))
 
         # Loop and check if pct profit between trades can be better
         is_gain_loss_better = True
@@ -144,7 +161,7 @@ class BasicStrategyRunner(StrategyRunnerInterface):
             gain_loss, gain_loss_percentage, nb_bought_order, nb_sold_order = \
                 self.simulate_tradings(self.date_prior_start, self.date_start, df_product_historic_rates, orders_scheme)
 
-            print('pct profit between trades : ' + str(pct_profit_btwn_trades) + ' | gainloss = ' + str(gain_loss))
+            #print('pct profit between trades : ' + str(pct_profit_btwn_trades) + ' | gainloss = ' + str(gain_loss))
 
             # Is current gain loss better tNonehan previous
             if (gain_loss - previous_gain_loss > 0):
@@ -331,7 +348,7 @@ class BasicStrategyRunner(StrategyRunnerInterface):
 
                     # print('closing order | bank_quote : ' + str(bank_quote) + ' | bank_base : ' + str(bank_base))
 
-        print('bank_quote_init : ' + str(self.BANK_QUOTE) + ' | bank_quote_end : ' + str(bank_quote))
+        #print('bank_quote_init : ' + str(self.BANK_QUOTE) + ' | bank_quote_end : ' + str(bank_quote))
 
         # set returned values
         gain_loss = bank_quote - self.BANK_QUOTE
@@ -340,3 +357,4 @@ class BasicStrategyRunner(StrategyRunnerInterface):
         return gain_loss, gain_loss_percentage, nb_bought_order, nb_sold_order
 
     #endregion
+

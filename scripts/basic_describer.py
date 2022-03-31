@@ -10,6 +10,8 @@ import pandas as pd
 class BasicDescriber(ProductDescriberInterface):
 
     def __init__(self, date_start: datetime, granularity: int, quote_currency: str):
+        #if granularity = 300
+        self.time_needed_for_process = timedelta(hours=15)
         self.date_start = date_start
         self.date_end = date_start + timedelta(hours=15)
         self.granularity = granularity
@@ -24,6 +26,16 @@ class BasicDescriber(ProductDescriberInterface):
         if(date_start > datetime.now()):
             raise ValueError('The starting date must be anterior to now')
 
+    @staticmethod
+    def time_needed_for_process(granularity):
+        assert granularity == 300, 'Only 300s intervals are supported at the moment'
+
+        #if granylarity = 300:
+        return timedelta(hours=15)
+
+    @staticmethod
+    def get_name() -> str:
+        return 'BasicDescriber'
 
     """Return complete products dataframe with associated stats and parameters"""
     def get_df_product_with_description(self) -> object:
@@ -200,7 +212,7 @@ class BasicDescriber(ProductDescriberInterface):
                 previous_sma3 = current_sma3
 
         # close last trajectory
-        if (trajectory['start_tick'] < index):
+        if (trajectory is not None and trajectory['start_tick'] < index):
             self.update_end_trajectory_variables(trajectory, index, previous_sma3)
             list_trajectories.append(trajectory)
 
