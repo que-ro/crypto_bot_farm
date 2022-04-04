@@ -56,7 +56,24 @@ date_test_end = date_test + timedelta(hours=15)
 df_test = UtilsDfProductHistoricRates.get_df_price_history('MANA-USD', date_test, date_test_end, 300)
 
 
-#Read data from tsv file
-#Separate features and label
+
+
+
+
+####### SCORE TABLE ########
+# All params from describer :
+#       Accuracy: 0.8648648648648649
+# Without ['raw_diff_highestlowest', 'raw_diff_Q3Q1', 'Q1', 'lowest_price', 'median', 'highest_price', 'Q3', 'quote_increment']
+#       Accuracy: 0.8648648648648649
+# Without ['raw_diff_highestlowest', 'raw_diff_Q3Q1', 'Q1', 'lowest_price', 'median', 'highest_price', 'Q3', 'quote_increment'
+#             ,'power_ratio_highestlowest', 'power_ratio_Q3Q1']
+
+
 #Filter features not used (from strat runner or labeller)
 #Feature selection with random forest
+
+############
+# A mettre dans un utils
+#############
+
+
