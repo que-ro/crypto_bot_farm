@@ -293,7 +293,7 @@ class BasicDescriber(ProductDescriberInterface):
 
      #endregion
 
-    #region  Power ration description methods
+    #region  Power ratio description methods
 
     """Add stats about the power ratio of the past historic rate to a currency pair dict"""
     def update_power_ratio_for_currency_pair_dict(self, currency_pair_stat_dict, lowest_price, highest_price, Q1, median, Q3):
@@ -309,9 +309,9 @@ class BasicDescriber(ProductDescriberInterface):
         if (diff_abs_highest_median == 0 and diff_abs_lowest_median == 0):
             power_ratio_highestlowest = 0
         elif (diff_abs_highest_median == 0):
-            power_ratio_highestlowest = -10
+            power_ratio_highestlowest = -2
         elif (diff_abs_lowest_median == 0):
-            power_ratio_highestlowest = 10
+            power_ratio_highestlowest = 2
         else:
             power_ratio_highestlowest = math.log10(abs(diff_abs_highest_median) / abs(diff_abs_lowest_median))
 
@@ -322,9 +322,9 @@ class BasicDescriber(ProductDescriberInterface):
         if (diff_abs_Q3_median == 0 and diff_abs_Q1_median == 0):
             power_ratio_Q3Q1 = 0
         elif (diff_abs_Q3_median == 0):
-            power_ratio_Q3Q1 = -10
+            power_ratio_Q3Q1 = -2
         elif (diff_abs_Q1_median == 0):
-            power_ratio_Q3Q1 = 10
+            power_ratio_Q3Q1 = 2
         else:
             power_ratio_Q3Q1 = math.log10(abs(diff_abs_Q3_median) / abs(diff_abs_Q1_median))
 

@@ -5,7 +5,8 @@ from datetime import datetime
 
 class DataAccumulator():
 
-    def __init__(self, describer_class, strategy_runner_class, result_labeller_class, granularity, quote_currency, nb_of_process):
+    def __init__(self, describer_class, strategy_runner_class, result_labeller_class, granularity, quote_currency, nb_of_process,
+                 save_describer_df=False):
 
         #Set variables feeded by user
         self.describer_class = describer_class
@@ -14,6 +15,7 @@ class DataAccumulator():
         self.granularity = granularity
         self.quote_currency = quote_currency
         self.nb_of_process = nb_of_process
+        self.is_save_describer_df_on = save_describer_df
 
         #Check parameters
         assert issubclass(describer_class,
@@ -37,6 +39,7 @@ class DataAccumulator():
 
         #Constant that should be written somewhere centralized
         self.DATA_FOLDER_PATH = os.path.join(os.getcwd(), '..', 'data')
+        self.DESCRIBER_DATA_FOLDER_PATH = os.path.join(self.DATA_FOLDER_PATH, 'describer')
 
         #Variables used during the process
         self.dict_indexes_processed = {}  # {'quote' : [datetime1, datetime2]}
@@ -157,6 +160,8 @@ class DataAccumulator():
             # Describer process
             describer = self.describer_class(date_start=date_start, granularity=self.granularity, quote_currency=self.quote_currency)
             describer.get_df_product_with_description()
+            if(self.is_save_describer_df_on):
+                self.save_describer_df_in_data_folder(describer)
 
             # Runner process
             date_start_runner = date_start + self.describer_class.time_needed_for_process(self.granularity)
@@ -196,5 +201,27 @@ class DataAccumulator():
 
         #Remove indexes going to be removed
         self.dict_indexes_going_to_be_processed = {}
+
+    def save_describer_df_in_data_folder(self, describer):
+        """Save the describer dataframe for further use"""
+
+        #Create describer folder it it doesn't exist
+        if (os.path.exists(self.DESCRIBER_DATA_FOLDER_PATH) == False):
+            os.mkdir(self.DESCRIBER_DATA_FOLDER_PATH)
+
+        #Create specific describer folder if it doesn't exist
+        specific_describer_subfolder = os.path.join(self.DESCRIBER_DATA_FOLDER_PATH, describer.__class__.get_name())
+        if (os.path.exists(specific_describer_subfolder) == False):
+            os.mkdir(specific_describer_subfolder)
+
+        #Save describer dataframe
+        filename_df_describer = describer.granularity + '_' + describer.quote_currency + '_' + describer.date_start.isoformat() + '.tsv'
+        describer.df_products_description.to_csv(
+                    os.path.join(specific_describer_subfolder, filename_df_describer),
+                    header=True,
+                    sep='\t'
+        )
+
+
 
     #endregion
