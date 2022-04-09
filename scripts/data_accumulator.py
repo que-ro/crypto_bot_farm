@@ -39,8 +39,8 @@ class DataAccumulator():
         self.DATA_FOLDER_PATH = os.path.join(os.getcwd(), '..', 'data')
 
         #Variables used during the process
-        self.dict_indexes_processed = {}  # {'datetime' : 'quote'}
-        self.dict_indexes_going_to_be_processed = {}  # {'datetime' : 'quote'}
+        self.dict_indexes_processed = {}  # {'quote' : [datetime1, datetime2]}
+        self.dict_indexes_going_to_be_processed = {}  # {'quote' : [datetime1, datetime2]}
 
 
     #region Methods for initialisation of class
@@ -89,41 +89,57 @@ class DataAccumulator():
         date_start = date_end
         for index_process in range(1, self.nb_of_process + 1):
             date_start = date_start - self.timedelta_for_all_process
-            self.dict_indexes_going_to_be_processed[date_start] = self.quote_currency
+            if(self.quote_currency in self.dict_indexes_going_to_be_processed.keys()):
+                self.dict_indexes_going_to_be_processed[self.quote_currency].append(date_start)
+            else:
+                self.dict_indexes_going_to_be_processed[self.quote_currency] = [date_start]
 
     def fill_dict_indexes_from_file(self):
         with open(os.path.join(self.DATA_FOLDER_PATH, self.index_filename)) as file:
             tsv_file = csv.reader(file, delimiter='\t')
             for line in tsv_file:
-                self.dict_indexes_processed[datetime.fromisoformat(line[0])] = line[1]
+                quote = line[1]
+                date = datetime.fromisoformat(line[0])
+                if(quote in self.dict_indexes_processed.keys()):
+                    self.dict_indexes_processed[quote].append(date)
+                else:
+                    self.dict_indexes_processed[quote] = [date]
 
     def is_quote_present_in_dict_indexes_processed(self):
-        return self.quote_currency in self.dict_indexes_processed.values()
+        return self.quote_currency in self.dict_indexes_processed.keys()
 
     def get_indexes_for_inexistant_quote(self):
-        most_recent_date = max([key for key in self.dict_indexes_processed.keys()])
+        most_recent_date = max([date for list_date in self.dict_indexes_processed.values() for date in list_date])
         date_start = most_recent_date
         for index_process in range(1, self.nb_of_process + 1):
+            if (self.quote_currency in self.dict_indexes_going_to_be_processed.keys()):
+                self.dict_indexes_going_to_be_processed[self.quote_currency].append(date_start)
+            else:
+                self.dict_indexes_going_to_be_processed[self.quote_currency] = [date_start]
             date_start = date_start - self.timedelta_for_all_process
-            self.dict_indexes_going_to_be_processed[date_start] = self.quote_currency
 
     def get_indexes_for_existant_quote(self):
         nb_of_process_added_in_method = 0
 
         # Add more recent datetime index if possible
-        most_recent_datetime = max([k for k in {key: value for key, value in self.dict_indexes_processed.items() if
-                                                value == self.quote_currency}.keys()])
+        most_recent_datetime = max([date for quote, list_date in self.dict_indexes_processed.items() for date in list_date if quote == self.quote_currency])
         date_start_index = most_recent_datetime + self.timedelta_for_all_process
         while (date_start_index < (datetime.now() - self.timedelta_for_all_process) and (nb_of_process_added_in_method < self.nb_of_process)):
-            self.dict_indexes_going_to_be_processed[date_start_index] = self.quote_currency
+            if(self.quote_currency in self.dict_indexes_going_to_be_processed.keys()):
+                self.dict_indexes_going_to_be_processed[self.quote_currency].append(date_start_index)
+            else:
+                self.dict_indexes_going_to_be_processed[self.quote_currency] = [date_start_index]
             date_start_index = date_start_index + self.timedelta_for_all_process
             nb_of_process_added_in_method += 1
 
         # Add after the oldest datetime index
-        oldest_datetime = min([k for k in {key: value for key, value in self.dict_indexes_processed.items() if value == self.quote_currency}.keys()])
+        oldest_datetime = min([date for quote, list_date in self.dict_indexes_processed.items() for date in list_date if quote == self.quote_currency])
         date_start_index = oldest_datetime - self.timedelta_for_all_process
         while nb_of_process_added_in_method < self.nb_of_process:
-            self.dict_indexes_going_to_be_processed[date_start_index] = self.quote_currency
+            if (self.quote_currency in self.dict_indexes_going_to_be_processed.keys()):
+                self.dict_indexes_going_to_be_processed[self.quote_currency].append(date_start_index)
+            else:
+                self.dict_indexes_going_to_be_processed[self.quote_currency] = [date_start_index]
             date_start_index = date_start_index - self.timedelta_for_all_process
             nb_of_process_added_in_method += 1
 
@@ -136,10 +152,10 @@ class DataAccumulator():
         # get index to process
         self.get_index_to_process()
 
-        for date_start, quote_currency in self.dict_indexes_going_to_be_processed.items():
+        for date_start in self.dict_indexes_going_to_be_processed[self.quote_currency]:
 
             # Describer process
-            describer = self.describer_class(date_start=date_start, granularity=self.granularity, quote_currency=quote_currency)
+            describer = self.describer_class(date_start=date_start, granularity=self.granularity, quote_currency=self.quote_currency)
             describer.get_df_product_with_description()
 
             # Runner process
@@ -170,10 +186,13 @@ class DataAccumulator():
 
             # Add indexes to index file
             with open(os.path.join(self.DATA_FOLDER_PATH, self.index_filename), 'a+') as file:
-                file.write(str(date_start.isoformat()) + '\t' + quote_currency + '\n')
+                file.write(str(date_start.isoformat()) + '\t' + self.quote_currency + '\n')
 
             # Add to processed indexes
-            self.dict_indexes_processed[date_start] = quote_currency
+            if (self.quote_currency in self.dict_indexes_processed.keys()):
+                self.dict_indexes_processed[self.quote_currency].append(date_start)
+            else:
+                self.dict_indexes_processed[self.quote_currency] = [date_start]
 
         #Remove indexes going to be removed
         self.dict_indexes_going_to_be_processed = {}
