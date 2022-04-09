@@ -134,6 +134,10 @@ class CustomDescriber1(ProductDescriberInterface):
         df_list_trajectories = self.get_trajectories_df(df_product_historic_rates)
         self.update_traj_stat_for_currency_pair_dict(currency_pair_stat_dict, df_list_trajectories)
 
+        # Update support and resistance price
+        currency_pair_stat_dict['y_support'] = df_product_historic_rates['close'].quantile(0.1)
+        currency_pair_stat_dict['y_resistance'] = df_product_historic_rates['close'].quantile(0.9)
+
         return currency_pair_stat_dict
 
     #endregion

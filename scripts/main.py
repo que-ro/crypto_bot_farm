@@ -92,7 +92,32 @@ df_product_historic_rates = UtilsDfProductHistoricRates.get_df_price_history(
                 granularity=granularity
             )
 
+from strategy_runners.custom_strategy_1 import CustomStrategy1Runner
+date_start_strat = date_start +timedelta(hours=15)
+date_end_strat = date_start_strat + timedelta(hours=45)
+granularity=300
+strat_runner = CustomStrategy1Runner(
+    date_start=date_start_strat,
+    granularity=granularity,
+    df_products=describer.df_products_description
+)
+strat_runner.get_df_product_with_strat_result()
 
+
+
+
+
+
+
+import importlib, sys
+importlib.reload(sys.modules['strategy_runners.custom_strategy_1'])
+from strategy_runners.custom_strategy_1 import CustomStrategy1Runner
+
+
+is_losing = strat_runner.df_products['gain_loss'] < 0
+is_selling = strat_runner.df_products['nb_sold_order'] > 0
+strat_runner.df_products[is_losing & is_selling].sort_values(by=['gain_loss'])
+strat_runner.plot_trading_visual('ASM-USD')
 
 
 

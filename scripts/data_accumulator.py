@@ -202,6 +202,12 @@ class DataAccumulator():
         #Remove indexes going to be removed
         self.dict_indexes_going_to_be_processed = {}
 
+    def accumulate_data_with_previous_describer_df(self):
+        pass #todo
+
+    #endregion
+    
+    #region Saving methods
     def save_describer_df_in_data_folder(self, describer):
         """Save the describer dataframe for further use"""
 
@@ -221,7 +227,4 @@ class DataAccumulator():
                     header=True,
                     sep='\t'
         )
-
-
-
     #endregion
