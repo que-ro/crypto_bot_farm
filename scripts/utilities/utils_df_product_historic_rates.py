@@ -58,6 +58,15 @@ class UtilsDfProductHistoricRates:
                     list_price_history, date1, date2, granularity)
             ])
 
+        #fill all missing timestamps
+        df_price_history = UtilsDfProductHistoricRates.fill_df_historicrates_with_missing_timestamp(
+            df_price_history,
+            date_start,
+            date_end,
+            granularity)
+        df_price_history['datetime'] = df_price_history.apply(
+            lambda row: datetime.utcfromtimestamp(row['time']), axis=1)
+
         #get rid of biased index
         df_price_history = df_price_history.reset_index()
         df_price_history = df_price_history.drop('index', axis=1)
@@ -72,18 +81,18 @@ class UtilsDfProductHistoricRates:
     """Return dataframe from array of product historic rates from cbpro"""
     @staticmethod
     def get_df_from_product_historic_rates(product_historic_rates, date_start, date_end, granularity):
-        df_product_historic_rates = pd.DataFrame(product_historic_rates)
+
+        #Get dataframe
+        if(len(product_historic_rates) == 0):
+            df_product_historic_rates = pd.DataFrame(pd.np.empty((0, 6)))
+        else:
+            df_product_historic_rates = pd.DataFrame(product_historic_rates)
+
         df_product_historic_rates.set_axis(['time', 'low', 'high', 'open', 'close', 'volume'], axis=1, inplace=True)
         df_product_historic_rates.sort_values(by=['time'], inplace=True)
         df_product_historic_rates.reset_index(inplace=True)
         df_product_historic_rates.drop(['index'], axis=1, inplace=True)
-        df_product_historic_rates = UtilsDfProductHistoricRates.fill_df_historicrates_with_missing_timestamp(
-            df_product_historic_rates,
-            date_start,
-            date_end,
-            granularity)
-        df_product_historic_rates['datetime'] = df_product_historic_rates.apply(
-            lambda row: datetime.fromtimestamp(row['time']), axis=1)
+
         return df_product_historic_rates
 
     """Fill product historic rates dataframes with missing timestamp ticks"""
