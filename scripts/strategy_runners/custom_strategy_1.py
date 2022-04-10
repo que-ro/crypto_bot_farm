@@ -1,7 +1,6 @@
 from interfaces import StrategyRunnerInterface
 from datetime import datetime, timedelta
-import pandas as pd
-from utils_df_product_historic_rates import UtilsDfProductHistoricRates
+from utilities.utils_df_product_historic_rates import UtilsDfProductHistoricRates
 import matplotlib.pyplot as plt
 import logging
 from utilities.utils_logger import UtilitiesLogger
@@ -44,7 +43,7 @@ class CustomStrategy1Runner(StrategyRunnerInterface):
         self.VOLUME_PER_TRADE = 50
 
         # Log initisalization
-        self.logger.info('strategy runner initialized')
+        self.logger.info('strategy runner initialized with date_start : ' + self.date_start.isoformat())
 
     # region Interface implemented method
     @staticmethod

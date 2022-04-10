@@ -1,5 +1,7 @@
+import os.path
+
 from interfaces import ProductDescriberInterface
-from utils_df_product_historic_rates import UtilsDfProductHistoricRates
+from utilities.utils_df_product_historic_rates import UtilsDfProductHistoricRates
 from datetime import datetime, timedelta
 import cbpro
 import math
@@ -7,6 +9,8 @@ import pandas as pd
 import ta
 import logging
 from utilities.utils_logger import UtilitiesLogger
+import warnings
+import numpy as np
 
 class CustomDescriber1(ProductDescriberInterface):
 
@@ -19,7 +23,7 @@ class CustomDescriber1(ProductDescriberInterface):
         self.quote_currency = quote_currency
         self.df_products_description = None
         self.logger = UtilitiesLogger.get_logger(CustomDescriber1.get_name(), log_lvl=log_lvl)
-        self.logger.info('Describer initialized')
+        self.logger.info('Describer initialized with date_start : ' + self.date_start.isoformat())
 
     #region Interface implemented method
     @staticmethod
@@ -68,7 +72,7 @@ class CustomDescriber1(ProductDescriberInterface):
 
             # filter out product without any ticks
             nb_of_ticks = len(product_historic_rates)
-            if (nb_of_ticks == 0):
+            if (nb_of_ticks <= 1):
                 continue
 
             # get dataframe of product historic rates with moving average
@@ -172,51 +176,57 @@ class CustomDescriber1(ProductDescriberInterface):
             currency_pair_stat_dict[stat] = 0
 
         # update stat
-        for traj_cat, value in df_list_trajectories['traj_cat'].value_counts().iteritems():
-            currency_pair_stat_dict['nb_' + traj_cat] = value
+        if(not df_list_trajectories.empty):
+            for traj_cat, value in df_list_trajectories['traj_cat'].value_counts().iteritems():
+                currency_pair_stat_dict['nb_' + traj_cat] = value
 
     """Return a dataframe of the trajectories from a datafrale of historic rates"""
 
     def get_trajectories_df(self, df_product_historic_rates):
+        self.logger.debug('entering get_trajectories_df(...)')
+
         # init lowest and highest sma3
         df_product_historic_rates['sma3'] = df_product_historic_rates['close'].rolling(3).mean()
-        lowest_sma3 = df_product_historic_rates.describe().loc['min', 'sma3']
-        highest_sma3 = df_product_historic_rates.describe().loc['max', 'sma3']
+        lowest_sma3 = df_product_historic_rates['sma3'].describe().loc['min']
+        highest_sma3 = df_product_historic_rates['sma3'].describe().loc['max']
 
         # init list of trajectories and trajectory
         list_trajectories = []  # [{start_tick, end_tick, start_price, end_price, nb_ticks, coeff_dir_sense, coeff_dir, traj_cat}, ... ]
         trajectory = None
+
+        # if lowest_sma3 equals highest sma3, then there is no trajectory
+        if(highest_sma3 == lowest_sma3):
+            return pd.DataFrame(list_trajectories)
 
         # loop through the ticks
         previous_close_price = None
         previous_sma3 = None
         for index, row in df_product_historic_rates.iterrows():
 
-            # init current price and sma3
-            current_close_price = row['close']
-            current_sma3 = 2 * ((row['sma3'] - lowest_sma3) / (highest_sma3 - lowest_sma3)) - 1
+                # init current price and sma3
+                current_sma3 = 2 * ((row['sma3'] - lowest_sma3) / (highest_sma3 - lowest_sma3)) - 1
 
-            # case first trajectory
-            if (self.is_first_trajectory(trajectory, current_sma3)):
-                trajectory = self.init_trajectory_dict(index, current_sma3)
-                previous_sma3 = current_sma3
+                # case first trajectory
+                if (self.is_first_trajectory(trajectory, current_sma3)):
+                    trajectory = self.init_trajectory_dict(index, current_sma3)
+                    previous_sma3 = current_sma3
 
-            # case start of a trajectory
-            elif (self.is_start_of_a_trajectory(trajectory)):
-                self.update_start_trajectory_variables(trajectory, current_sma3, previous_sma3)
-                previous_sma3 = current_sma3
+                # case start of a trajectory
+                elif (self.is_start_of_a_trajectory(trajectory)):
+                    self.update_start_trajectory_variables(trajectory, current_sma3, previous_sma3)
+                    previous_sma3 = current_sma3
 
-            # case end of trajectory
-            elif (self.is_end_of_a_trajectory(trajectory, current_sma3, previous_sma3)):
-                self.update_end_trajectory_variables(trajectory, index - 1, previous_sma3)
-                list_trajectories.append(trajectory)
-                trajectory = self.init_trajectory_dict(index, current_sma3)
-                previous_sma3 = current_sma3
+                # case end of trajectory
+                elif (self.is_end_of_a_trajectory(trajectory, current_sma3, previous_sma3)):
+                    self.update_end_trajectory_variables(trajectory, index - 1, previous_sma3)
+                    list_trajectories.append(trajectory)
+                    trajectory = self.init_trajectory_dict(index, current_sma3)
+                    previous_sma3 = current_sma3
 
-            # case continue of trajectory
-            elif (self.is_continue_of_a_trajectory(trajectory)):
-                trajectory['nb_ticks'] = trajectory['nb_ticks'] + 1
-                previous_sma3 = current_sma3
+                # case continue of trajectory
+                elif (self.is_continue_of_a_trajectory(trajectory)):
+                    trajectory['nb_ticks'] = trajectory['nb_ticks'] + 1
+                    previous_sma3 = current_sma3
 
         # close last trajectory
         if (trajectory is not None and trajectory['start_tick'] < index):
@@ -253,8 +263,6 @@ class CustomDescriber1(ProductDescriberInterface):
     """Update variables of trajectory when we got the start and the end of the said traj"""
 
     def update_end_trajectory_variables(self, trajectory, end_tick_index, previous_sma3):
-
-        self.logger.debug('entering update_end_trajectory_variables(...)')
 
         # set directional coefficient of the trajectory
         trajectory['end_tick'] = end_tick_index
@@ -496,32 +504,37 @@ class CustomDescriber1(ProductDescriberInterface):
             close=df_product_historic_rates['close'],
             window=15).bollinger_pband()
 
-        # Skip first empty lines
-        skip_nb_lines = df_product_historic_rates[df_product_historic_rates['bollinger_pct_bands'].isna()].shape[0]
-        df = df_product_historic_rates[skip_nb_lines:]
+        # Check if there is a boll pct bands values
+        if(df_product_historic_rates[df_product_historic_rates['bollinger_pct_bands'].notna()].shape[0] == 0):
+            currency_pair_stat_dict['pct_overbought_signal'] = 0
+            currency_pair_stat_dict['pct_oversold_signal'] = 0
+        else:
+            # Skip first empty lines
+            skip_nb_lines = df_product_historic_rates[df_product_historic_rates['bollinger_pct_bands'].isna()].shape[0]
+            df = df_product_historic_rates[skip_nb_lines:]
 
-        # Initialisation
-        nb_overbought_signal = 0
-        nb_oversold_signal = 0
-        nb_ticks = 0
+            # Initialisation
+            nb_overbought_signal = 0
+            nb_oversold_signal = 0
+            nb_ticks = 0
 
-        # Through bollinger pct bands indicator
-        for index, row in df.iterrows():
+            # Through bollinger pct bands indicator
+            for index, row in df.iterrows():
 
-            if (row['bollinger_pct_bands'] > 1):
-                nb_overbought_signal += 1
+                if (row['bollinger_pct_bands'] > 1):
+                    nb_overbought_signal += 1
 
-            if (row['bollinger_pct_bands'] < 0):
-                nb_oversold_signal += 1
+                if (row['bollinger_pct_bands'] < 0):
+                    nb_oversold_signal += 1
 
-            nb_ticks += 1
+                nb_ticks += 1
 
-        pct_overbought_signal = nb_overbought_signal / nb_ticks
-        pct_oversold_signal = nb_oversold_signal / nb_ticks
+            pct_overbought_signal = nb_overbought_signal / nb_ticks
+            pct_oversold_signal = nb_oversold_signal / nb_ticks
 
-        # Update stat of currency pair
-        currency_pair_stat_dict['pct_overbought_signal'] = pct_overbought_signal
-        currency_pair_stat_dict['pct_oversold_signal'] = pct_oversold_signal
+            # Update stat of currency pair
+            currency_pair_stat_dict['pct_overbought_signal'] = pct_overbought_signal
+            currency_pair_stat_dict['pct_oversold_signal'] = pct_oversold_signal
 
     def update_global_trending_with_sma15(self, currency_pair_stat_dict, df_product_historic_rates):
 
@@ -536,8 +549,6 @@ class CustomDescriber1(ProductDescriberInterface):
         sma_end = df_product_historic_rates.iloc[-1]['sma15']
 
         # Calculate pct increase or decrease of price
-        self.logger.debug('calculate sma15_trend as : (sma_end - sma_start) / sma_start')
-        self.logger.debug('with sma_start : ' + str(sma_start) + ' and sma_end : ' + str(sma_end))
         pct_global_sma15_trend = (sma_end - sma_start) / sma_start
 
         # Update stat of currency pair

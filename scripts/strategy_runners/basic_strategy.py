@@ -1,11 +1,7 @@
 from interfaces import StrategyRunnerInterface
 from datetime import datetime, timedelta
-import cbpro
-import matplotlib.pyplot as plt
-import math
-import numpy as np
 import pandas as pd
-from utils_df_product_historic_rates import UtilsDfProductHistoricRates
+from utilities.utils_df_product_historic_rates import UtilsDfProductHistoricRates
 import logging
 
 class BasicStrategyRunner(StrategyRunnerInterface):

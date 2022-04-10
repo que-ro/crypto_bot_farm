@@ -3,7 +3,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 import os
 from sklearn.metrics import confusion_matrix
-from utils_classifier import UtilsClassifier
+from utilities.utils_classifier import UtilsClassifier
 from sklearn import metrics
 import numpy as np
 

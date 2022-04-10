@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import class_weight
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
-from utils_classifier import UtilsClassifier
+from utilities.utils_classifier import UtilsClassifier
 
 
 ###

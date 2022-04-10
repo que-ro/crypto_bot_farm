@@ -94,7 +94,7 @@ class DataAccumulator():
             self.create_new_index()
 
     def create_new_index(self):
-        date_end = datetime.now()
+        date_end = datetime.utcnow()
         date_start = date_end
         for index_process in range(1, self.nb_of_process + 1):
             date_start = date_start - self.timedelta_for_all_process

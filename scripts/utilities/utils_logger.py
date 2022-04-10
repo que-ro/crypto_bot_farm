@@ -43,6 +43,9 @@ class UtilitiesLogger:
             os.mkdir(logs_folder)
 
         # add handlers
+        if (logger.hasHandlers()):
+            logger.handlers.clear()
+
         logger.addHandler(UtilitiesLogger.get_file_handler(
             file_path=os.path.join(logs_folder, logs_filename),
             log_lvl=log_lvl

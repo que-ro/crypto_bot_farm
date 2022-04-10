@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import cbpro
 import matplotlib.pyplot as plt
 import math
@@ -30,8 +30,8 @@ class UtilsDfProductHistoricRates:
             date2 = date_start + timedelta(hours=15 * (idx + 1))
 
             list_price_history = public_client.get_product_historic_rates(product_id=currency_pair_id,
-                                                     start=date1,
-                                                     end=date2,
+                                                     start=date1.isoformat(),
+                                                     end=date2.isoformat(),
                                                      granularity=granularity)
 
             if(df_price_history is None):
@@ -114,6 +114,7 @@ class UtilsDfProductHistoricRates:
         for timestamp_index, row in df_product_historic_rates.iterrows():
             if (row['low'] != -1):
                 break
+
             df_product_historic_rates.loc[timestamp_index, 'low'] = first_filled_row['open']
             df_product_historic_rates.loc[timestamp_index, 'high'] = first_filled_row['open']
             df_product_historic_rates.loc[timestamp_index, 'open'] = first_filled_row['open']
@@ -155,7 +156,7 @@ class UtilsDfProductHistoricRates:
         minutes_to_add_to_start_date = 5 - minutes_to_substract_to_end_date
 
         # Get api start and ending timestamp
-        api_start_timestamp = (date_start + timedelta(hours=1, minutes=minutes_to_add_to_start_date)).timestamp()
-        api_end_timestamp = (date_end + timedelta(minutes=60 - minutes_to_substract_to_end_date)).timestamp()
+        api_start_timestamp = (date_start + timedelta(minutes=minutes_to_add_to_start_date)).replace(tzinfo=timezone.utc).timestamp()
+        api_end_timestamp = (date_end - timedelta(minutes=minutes_to_substract_to_end_date)).replace(tzinfo=timezone.utc).timestamp()
 
         return api_start_timestamp, api_end_timestamp

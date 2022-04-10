@@ -1,138 +1,3 @@
-import matplotlib as mpl
-mpl.rcParams['figure.dpi'] = 300
-
-from datetime import datetime, timedelta
-from describers.basic_describer import BasicDescriber
-from strategy_runners.basic_strategy import BasicStrategyRunner
-from strategy_labellers.basic_result_labeller import BasicResultLabeller
-from data_accumulator import DataAccumulator
-
-data_acc = DataAccumulator(
-    describer_class=BasicDescriber,
-    strategy_runner_class=BasicStrategyRunner,
-    result_labeller_class=BasicResultLabeller,
-    granularity=300,
-    quote_currency='EUR',
-    nb_of_process=5
-)
-
-data_acc.accumulate_data_for_X_nb_of_process()
-
-data_acc2 = DataAccumulator(
-    describer_class=BasicDescriber,
-    strategy_runner_class=BasicStrategyRunner,
-    result_labeller_class=BasicResultLabeller,
-    granularity=300,
-    quote_currency='USD',
-    nb_of_process=5
-)
-
-data_acc2.accumulate_data_for_X_nb_of_process()
-
-data_acc3 = DataAccumulator(
-    describer_class=BasicDescriber,
-    strategy_runner_class=BasicStrategyRunner,
-    result_labeller_class=BasicResultLabeller,
-    granularity=300,
-    quote_currency='GBP',
-    nb_of_process=5
-)
-
-data_acc3.accumulate_data_for_X_nb_of_process()
-
-
-
-from utils_df_product_historic_rates import UtilsDfProductHistoricRates
-
-date_test = datetime(2022, 3, 11, 17, 2, 45, 679691)
-date_test_end = date_test + timedelta(hours=15)
-df_test = UtilsDfProductHistoricRates.get_df_price_history('MANA-USD', date_test, date_test_end, 300)
-
-
-
-
-
-
-####### SCORE TABLE ########
-# All params from describer :
-#       Accuracy: 0.8648648648648649
-# Without ['raw_diff_highestlowest', 'raw_diff_Q3Q1', 'Q1', 'lowest_price', 'median', 'highest_price', 'Q3', 'quote_increment']
-#       Accuracy: 0.8648648648648649
-# Without ['raw_diff_highestlowest', 'raw_diff_Q3Q1', 'Q1', 'lowest_price', 'median', 'highest_price', 'Q3', 'quote_increment'
-#             ,'power_ratio_highestlowest', 'power_ratio_Q3Q1']
-
-
-#Filter features not used (from strat runner or labeller)
-#Feature selection with random forest
-
-
-from describers.custom_describer_1 import CustomDescriber1
-from datetime import datetime, timedelta
-date_now = datetime.now()
-date_start = date_now - timedelta(hours=60)
-
-describer = CustomDescriber1(date_start=date_start, granularity=300, quote_currency='USD')
-
-currency_pair_id = 'MANA-USD'
-date_start = date_now - timedelta(hours=60)
-date_end = date_start + timedelta(hours=15)
-granularity=300
-
-product_historic_rates = public_client.get_product_historic_rates(currency_pair_id,
-                                                                              start=date_start.isoformat(),
-                                                                              end=date_end.isoformat(),
-                                                                              granularity=granularity)
-from utils_df_product_historic_rates import UtilsDfProductHistoricRates
-df_product_historic_rates = UtilsDfProductHistoricRates.get_df_price_history(
-                currency_pair_id,
-                date_start=date_start,
-                date_end=date_end,
-                granularity=granularity
-            )
-
-from strategy_runners.custom_strategy_1 import CustomStrategy1Runner
-date_start_strat = date_start +timedelta(hours=15)
-date_end_strat = date_start_strat + timedelta(hours=45)
-granularity=300
-strat_runner = CustomStrategy1Runner(
-    date_start=date_start_strat,
-    granularity=granularity,
-    df_products=describer.df_products_description
-)
-strat_runner.get_df_product_with_strat_result()
-
-
-
-
-
-
-
-import importlib, sys
-importlib.reload(sys.modules['strategy_runners.custom_strategy_1'])
-
-is_losing = strat_runner.df_products['gain_loss'] < 0
-is_selling = strat_runner.df_products['nb_sold_order'] > 0
-strat_runner.df_products[is_losing & is_selling].sort_values(by=['gain_loss'])
-strat_runner.plot_trading_visual('ASM-USD')
-
-
-from strategy_runners.custom_strategy_1 import CustomStrategy1Runner
-date_start_strat = date_start +timedelta(hours=15)
-date_end_strat = date_start_strat + timedelta(hours=45)
-granularity=300
-strat_runner = CustomStrategy1Runner(
-    date_start=date_start_strat,
-    granularity=granularity,
-    df_products=describer.df_products_description[describer.df_products_description['currency_pair_id'] == 'ASM-USD']
-)
-strat_runner.get_df_product_with_strat_result()
-
-
-
-strat_runner.df_products[strat_runner.df_products['nb_sold_order'] > 1]
-
-
-
 import importlib, sys
 importlib.reload(sys.modules['data_accumulator'])
 from data_accumulator import DataAccumulator
@@ -148,7 +13,7 @@ data_acc = DataAccumulator(
     result_labeller_class=CustomLabeller1,
     granularity=300,
     quote_currency='EUR',
-    nb_of_process=1,
+    nb_of_process=20,
     save_describer_df=True,
     log_lvl_describer=logging.DEBUG
 )
@@ -159,21 +24,182 @@ data_acc.accumulate_data_for_X_nb_of_process()
 
 
 
-from datetime import datetime, timedelta
-from utils_df_product_historic_rates import UtilsDfProductHistoricRates
+#### Todelete zone
 
-date_now = datetime.now()
-date_start_describer = date_now - timedelta(hours=60)
-date_end_describer = date_start_describer + timedelta(hours=15)
-currency_pair_id = 'CLV-EUR'
-granularity = 300
+# from datetime import datetime, timedelta
+# from utilities.utils_df_product_historic_rates import UtilsDfProductHistoricRates
+#
+# date_start = datetime.fromisoformat('2022-02-25T07:18:11.948516')
+# date_end = date_start + timedelta(hours=45)
+# currency_pair_id = 'DIA-EUR'
+# granularity = 300
+#
+# df = UtilsDfProductHistoricRates.get_df_price_history(
+#     date_start=date_start,
+#     date_end=date_end,
+#     granularity=granularity,
+#     currency_pair_id=currency_pair_id
+# )
 
-df_product_historic_rates = UtilsDfProductHistoricRates.get_df_price_history(
-    currency_pair_id=currency_pair_id,
-    date_start=date_start_describer,
-    date_end=date_end_describer,
-    granularity=granularity
-)
+
+#
+# import cbpro
+# public_client = cbpro.PublicClient()
+# product_historic_rates = public_client.get_product_historic_rates(currency_pair_id,
+#                                                                               start=date_start.isoformat(),
+#                                                                               end=date_end.isoformat(),
+#                                                                               granularity=granularity)
+#
+
+#
+# from datetime import datetime, timedelta, timezone
+#
+# date_utc_now = datetime.utcnow()
+# date_utc_start = date_utc_now - timedelta(hours=15)
+# date_utc_end = date_utc_start + timedelta(hours=15)
+#
+# date_now = datetime.now()
+# date_start = date_now - timedelta(hours=15)
+# date_end = date_start + timedelta(hours=15)
+#
+# currency_pair_id = 'ETH-USD'
+# granularity=300
+#
+# import cbpro
+# public_client = cbpro.PublicClient()
+#
+# prod = public_client.get_product_historic_rates(currency_pair_id,
+#                                                                               start=date_start.isoformat(),
+#                                                                               end=date_end.isoformat(),
+#                                                                               granularity=granularity)
+#
+# prod_utc = public_client.get_product_historic_rates(currency_pair_id,
+#                                                                               start=date_utc_start.isoformat(),
+#                                                                               end=date_utc_end.isoformat(),
+#                                                                               granularity=granularity)
+#
+#
+#
+# date_start_iso = date_utc_now.replace(tzinfo=timezone.utc).isoformat()
+# date_end_iso = date_utc_end.replace(tzinfo=timezone.utc).isoformat()
+#
+#
+# prod_iso = public_client.get_product_historic_rates(currency_pair_id,
+#                                                                               start=date_start_iso,
+#                                                                               end=date_end_iso,
+#                                                                               granularity=granularity)
+#
+#
+#
+# utc_date_start = datetime.utcnow() - timedelta(hours=60)
+# utc_date_end = utc_date_start + timedelta(hours=15)
+# currency_pair_id = 'ETH-USD'
+# granularity=300
+# utc_prods = public_client.get_product_historic_rates(currency_pair_id,
+#                                                                               start=utc_date_start.isoformat(),
+#                                                                               end=utc_date_end.isoformat(),
+#                                                                               granularity=granularity)
+#
+# utc_date_start_from_cbpro = datetime.fromtimestamp(utc_prods[-1][0])
+# utc_date_end_from_cbpro = datetime.fromtimestamp(utc_prods[0][0])
+#
+#
+# date_utc_now =
+#
+#
+#
+# from datetime import datetime, timedelta, timezone
+# import cbpro
+#
+# granularity=300
+# currency_pair_id='BTC-USD'
+#
+# utc_date_now = datetime.utcnow()
+# nor_date_now = datetime.now()
+#
+# utc_date_start = utc_date_now - timedelta(hours=60)
+# utc_date_end = utc_date_start + timedelta(hours=15)
+#
+# nor_date_start = nor_date_now - timedelta(hours=60)
+# nor_date_end =  nor_date_start + timedelta(hours=15)
+#
+# public_client = cbpro.PublicClient()
+#
+# utc_prods = public_client.get_product_historic_rates(
+#     currency_pair_id,
+#     start=utc_date_start.isoformat(),
+#     end=utc_date_end.isoformat(),
+#     granularity=granularity,
+# )
+#
+# nor_prods = public_client.get_product_historic_rates(
+#     currency_pair_id,
+#     start=nor_date_start.isoformat(),
+#     end=nor_date_end.isoformat(),
+#     granularity=granularity,
+# )
+#
+# utc_date_cbpro_start_ts = datetime.fromtimestamp(utc_prods[-1][0])
+# utc_date_cbpro_end_ts = datetime.fromtimestamp(utc_prods[0][0])
+#
+# nor_date_cbpro_start_ts = datetime.fromtimestamp(nor_prods[-1][0])
+# nor_date_cbpro_end_ts = datetime.fromtimestamp(nor_prods[0][0])
+#
+# import time
+# utc_date_cbpro_start_
+#
+#
+#
+#
+# from datetime import datetime, timedelta, timezone
+# import time
+# from time import mktime
+# import cbpro
+#
+# public_client = cbpro.PublicClient()
+#
+# granularity=300
+# currency_pair_id='BTC-USD'
+# date_now = datetime.now()
+# date_start = date_now - timedelta(hours=60)
+# date_end = date_start + timedelta(hours=15)
+#
+# prods = public_client.get_product_historic_rates(
+#     currency_pair_id,
+#     start=date_start.isoformat(),
+#     end=date_end.isoformat(),
+#     granularity=granularity,
+# )
+#
+# date_start_api = datetime.fromtimestamp(mktime(time.gmtime(prods[-1][0])))
+# date_end_api = datetime.fromtimestamp(mktime(time.gmtime(prods[0][0])))
 
 
-df_product_historic_rates['sma15'] = df_product_historic_rates['close'].rolling(15).mean()
+
+# from datetime import timezone, timedelta, datetime
+# import cbpro
+#
+# public_client = cbpro.PublicClient()
+#
+# date_now = datetime.utcnow()
+# date_start = date_now - timedelta(hours=60)
+# date_end = date_start + timedelta(hours=15)
+# granularity=300
+# currency_pair_id='BTC-USD'
+#
+# prods = public_client.get_product_historic_rates(
+#     currency_pair_id,
+#     start=date_start.isoformat(),
+#     end=date_end.isoformat(),
+#     granularity=granularity
+# )
+#
+# ts_cbpro_end = prods[0][0]
+# ts_cbpro_start = prods[-1][0]
+#
+# from utilities.utils_df_product_historic_rates import UtilsDfProductHistoricRates
+# ts_own_start, ts_own_end = UtilsDfProductHistoricRates.get_start_end_timestamp_of_api(
+#     date_start,
+#     date_end,
+#     granularity
+# )
