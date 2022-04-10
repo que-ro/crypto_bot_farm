@@ -2,11 +2,15 @@ import interfaces
 import os
 import csv
 from datetime import datetime
+import logging
 
 class DataAccumulator():
 
     def __init__(self, describer_class, strategy_runner_class, result_labeller_class, granularity, quote_currency, nb_of_process,
-                 save_describer_df=False):
+                 save_describer_df=False,
+                 log_lvl_describer=logging.INFO,
+                 log_lvl_strat_runner=logging.INFO
+                 ):
 
         #Set variables feeded by user
         self.describer_class = describer_class
@@ -16,6 +20,8 @@ class DataAccumulator():
         self.quote_currency = quote_currency
         self.nb_of_process = nb_of_process
         self.is_save_describer_df_on = save_describer_df
+        self.log_lvl_describer = log_lvl_describer
+        self.log_lvl_strat_runner = log_lvl_strat_runner
 
         #Check parameters
         assert issubclass(describer_class,
@@ -158,7 +164,8 @@ class DataAccumulator():
         for date_start in self.dict_indexes_going_to_be_processed[self.quote_currency]:
 
             # Describer process
-            describer = self.describer_class(date_start=date_start, granularity=self.granularity, quote_currency=self.quote_currency)
+            describer = self.describer_class(date_start=date_start, granularity=self.granularity, quote_currency=self.quote_currency,
+                                             log_lvl=self.log_lvl_describer)
             describer.get_df_product_with_description()
             if(self.is_save_describer_df_on):
                 self.save_describer_df_in_data_folder(describer)
@@ -166,7 +173,9 @@ class DataAccumulator():
             # Runner process
             date_start_runner = date_start + self.describer_class.time_needed_for_process(self.granularity)
             strategy_runner = self.strategy_runner_class(date_start=date_start_runner, granularity=self.granularity,
-                                                    df_products=describer.df_products_description)
+                                                         df_products=describer.df_products_description,
+                                                         log_lvl=self.log_lvl_strat_runner
+            )
             strategy_runner.get_df_product_with_strat_result()
 
             # Labeller process
@@ -221,7 +230,11 @@ class DataAccumulator():
             os.mkdir(specific_describer_subfolder)
 
         #Save describer dataframe
-        filename_df_describer = describer.granularity + '_' + describer.quote_currency + '_' + describer.date_start.isoformat() + '.tsv'
+        filename_df_describer = str(describer.granularity) \
+                                + '_' + str(describer.quote_currency) \
+                                + '_' + describer.date_start.isoformat().replace(':', '-') \
+                                + '.tsv'
+
         describer.df_products_description.to_csv(
                     os.path.join(specific_describer_subfolder, filename_df_describer),
                     header=True,

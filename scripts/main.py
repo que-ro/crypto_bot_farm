@@ -4,7 +4,7 @@ mpl.rcParams['figure.dpi'] = 300
 from datetime import datetime, timedelta
 from describers.basic_describer import BasicDescriber
 from strategy_runners.basic_strategy import BasicStrategyRunner
-from basic_result_labeller import BasicResultLabeller
+from strategy_labellers.basic_result_labeller import BasicResultLabeller
 from data_accumulator import DataAccumulator
 
 data_acc = DataAccumulator(
@@ -66,8 +66,6 @@ df_test = UtilsDfProductHistoricRates.get_df_price_history('MANA-USD', date_test
 #Feature selection with random forest
 
 
-from utils_df_product_historic_rates import UtilsDfProductHistoricRates
-import ta
 from describers.custom_describer_1 import CustomDescriber1
 from datetime import datetime, timedelta
 date_now = datetime.now()
@@ -111,8 +109,6 @@ strat_runner.get_df_product_with_strat_result()
 
 import importlib, sys
 importlib.reload(sys.modules['strategy_runners.custom_strategy_1'])
-from strategy_runners.custom_strategy_1 import CustomStrategy1Runner
-
 
 is_losing = strat_runner.df_products['gain_loss'] < 0
 is_selling = strat_runner.df_products['nb_sold_order'] > 0
@@ -120,4 +116,64 @@ strat_runner.df_products[is_losing & is_selling].sort_values(by=['gain_loss'])
 strat_runner.plot_trading_visual('ASM-USD')
 
 
+from strategy_runners.custom_strategy_1 import CustomStrategy1Runner
+date_start_strat = date_start +timedelta(hours=15)
+date_end_strat = date_start_strat + timedelta(hours=45)
+granularity=300
+strat_runner = CustomStrategy1Runner(
+    date_start=date_start_strat,
+    granularity=granularity,
+    df_products=describer.df_products_description[describer.df_products_description['currency_pair_id'] == 'ASM-USD']
+)
+strat_runner.get_df_product_with_strat_result()
 
+
+
+strat_runner.df_products[strat_runner.df_products['nb_sold_order'] > 1]
+
+
+
+import importlib, sys
+importlib.reload(sys.modules['data_accumulator'])
+from data_accumulator import DataAccumulator
+from describers.custom_describer_1 import CustomDescriber1
+from strategy_runners.custom_strategy_1 import CustomStrategy1Runner
+from strategy_labellers.custom_labeller_1 import CustomLabeller1
+import logging
+
+
+data_acc = DataAccumulator(
+    describer_class=CustomDescriber1,
+    strategy_runner_class=CustomStrategy1Runner,
+    result_labeller_class=CustomLabeller1,
+    granularity=300,
+    quote_currency='EUR',
+    nb_of_process=1,
+    save_describer_df=True,
+    log_lvl_describer=logging.DEBUG
+)
+
+data_acc.accumulate_data_for_X_nb_of_process()
+
+
+
+
+
+from datetime import datetime, timedelta
+from utils_df_product_historic_rates import UtilsDfProductHistoricRates
+
+date_now = datetime.now()
+date_start_describer = date_now - timedelta(hours=60)
+date_end_describer = date_start_describer + timedelta(hours=15)
+currency_pair_id = 'CLV-EUR'
+granularity = 300
+
+df_product_historic_rates = UtilsDfProductHistoricRates.get_df_price_history(
+    currency_pair_id=currency_pair_id,
+    date_start=date_start_describer,
+    date_end=date_end_describer,
+    granularity=granularity
+)
+
+
+df_product_historic_rates['sma15'] = df_product_historic_rates['close'].rolling(15).mean()

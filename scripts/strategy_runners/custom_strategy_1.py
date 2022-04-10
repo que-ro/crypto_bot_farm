@@ -3,10 +3,18 @@ from datetime import datetime, timedelta
 import pandas as pd
 from utils_df_product_historic_rates import UtilsDfProductHistoricRates
 import matplotlib.pyplot as plt
+import logging
+from utilities.utils_logger import UtilitiesLogger
 
 class CustomStrategy1Runner(StrategyRunnerInterface):
 
-    def __init__(self, date_start: datetime, granularity, df_products: object):
+    def __init__(self, date_start: datetime, granularity, df_products: object, log_lvl=logging.INFO):
+
+        # init logger
+        self.logger = UtilitiesLogger.get_logger(
+            logger_name=CustomStrategy1Runner.get_name(),
+            log_lvl=log_lvl
+        )
 
         # if granularity = 300
         self.time_needed_for_process = timedelta(hours=45)
@@ -35,6 +43,9 @@ class CustomStrategy1Runner(StrategyRunnerInterface):
         self.BANK_QUOTE = 50
         self.VOLUME_PER_TRADE = 50
 
+        # Log initisalization
+        self.logger.info('strategy runner initialized')
+
     # region Interface implemented method
     @staticmethod
     def check_parameter(date_start: datetime, granularity: int) -> None:
@@ -56,6 +67,7 @@ class CustomStrategy1Runner(StrategyRunnerInterface):
         return 'CustomStrategy1'
 
     def get_df_product_with_strat_result(self) -> object:
+
         # Initialisation of new cols
         self.df_products['gain_loss'] = None
         self.df_products['gain_loss_percentage'] = None
@@ -70,9 +82,7 @@ class CustomStrategy1Runner(StrategyRunnerInterface):
             y_support = product['y_support']
             y_resistance = product['y_resistance']
 
-            print('==========================================')
-            print(currency_pair_id)
-            print('==========================================')
+            self.logger.info('running strategy for ' + str(currency_pair_id))
 
             #Get price history dataframe
             df_product_historic_rates = UtilsDfProductHistoricRates.get_df_price_history(
@@ -111,6 +121,7 @@ class CustomStrategy1Runner(StrategyRunnerInterface):
     #region Trading simulation methods
 
     def simulate_tradings(self, df_price, y_support, y_resistance):
+        self.logger.debug('entering simulate_tradings(...)')
 
         #Init variables
         bank_quote = self.BANK_QUOTE
@@ -120,6 +131,7 @@ class CustomStrategy1Runner(StrategyRunnerInterface):
         nb_sold_order = 0
         is_there_an_order_bought = False
         is_trading_closed = False
+        is_bought_in_this_tick = False
         y_risk = y_support - (y_resistance - y_support) * 1.5
 
 
@@ -129,6 +141,8 @@ class CustomStrategy1Runner(StrategyRunnerInterface):
             price_low = ticks['low']
             price_high = ticks['high']
             close_price = ticks['close']
+
+            is_bought_in_this_tick = False
 
             #Buying section
             are_we_in_active_trading_timezone = self.date_start <= ticks['datetime'] <= self.date_stop_active_trading
@@ -143,11 +157,12 @@ class CustomStrategy1Runner(StrategyRunnerInterface):
                 #Save bought order
                 is_there_an_order_bought = True
                 nb_bought_order += 1
+                is_bought_in_this_tick = True
 
 
             #Selling section
             is_price_over_resistance = price_high > y_resistance
-            if(is_price_over_resistance and is_there_an_order_bought):
+            if(is_price_over_resistance and is_there_an_order_bought and not is_bought_in_this_tick):
 
                 #Update banks
                 trade_volume = bank_base
@@ -190,6 +205,7 @@ class CustomStrategy1Runner(StrategyRunnerInterface):
 
     #region Utility methods
     def get_fees_of_trade(self, volume):
+        self.logger.debug('entering get_fees_of_trade(...)')
         return volume * self.FEES_RATE
 
     def plot_trading_visual(self, currency_pair_id):

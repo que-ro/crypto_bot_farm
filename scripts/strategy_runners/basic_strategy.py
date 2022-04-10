@@ -6,10 +6,11 @@ import math
 import numpy as np
 import pandas as pd
 from utils_df_product_historic_rates import UtilsDfProductHistoricRates
+import logging
 
 class BasicStrategyRunner(StrategyRunnerInterface):
 
-    def __init__(self, date_start: datetime, granularity, df_products: object):
+    def __init__(self, date_start: datetime, granularity, df_products: object, log_lvl=logging.INFO):
 
         # if granularity = 300
         self.time_needed_for_process = timedelta(hours=45)

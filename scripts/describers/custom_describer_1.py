@@ -5,10 +5,12 @@ import cbpro
 import math
 import pandas as pd
 import ta
+import logging
+from utilities.utils_logger import UtilitiesLogger
 
 class CustomDescriber1(ProductDescriberInterface):
 
-    def __init__(self, date_start: datetime, granularity: int, quote_currency: str):
+    def __init__(self, date_start: datetime, granularity: int, quote_currency: str, log_lvl=logging.INFO):
         #if granularity = 300
         self.time_needed_for_process = timedelta(hours=15)
         self.date_start = date_start
@@ -16,6 +18,8 @@ class CustomDescriber1(ProductDescriberInterface):
         self.granularity = granularity
         self.quote_currency = quote_currency
         self.df_products_description = None
+        self.logger = UtilitiesLogger.get_logger(CustomDescriber1.get_name(), log_lvl=log_lvl)
+        self.logger.info('Describer initialized')
 
     #region Interface implemented method
     @staticmethod
@@ -54,6 +58,7 @@ class CustomDescriber1(ProductDescriberInterface):
 
             # init currency pair id
             currency_pair_id = currency_pair['currency_pair_id']
+            self.logger.info('describing : ' + currency_pair_id)
 
             # init coinbase pro public client
             product_historic_rates = public_client.get_product_historic_rates(currency_pair_id,
@@ -91,6 +96,8 @@ class CustomDescriber1(ProductDescriberInterface):
     #region Currency pair Methods
 
     def get_currency_pair_stat_dict(self, currency_pair_id, df_product_historic_rates):
+        self.logger.debug('entering get_currency_pair_stat_dict(self, currency_pair_id, df_product_historic_rates)')
+
         # init of dict with id
         currency_pair_stat_dict = {}
         currency_pair_stat_dict['currency_pair_id'] = currency_pair_id
@@ -147,6 +154,8 @@ class CustomDescriber1(ProductDescriberInterface):
     """Add stats abouth the trajectories of the past historic rate to a currency pair dict"""
 
     def update_traj_stat_for_currency_pair_dict(self, currency_pair_stat_dict, df_list_trajectories):
+
+        self.logger.debug('entering update_traj_stat_for_currency_pair_dict(...)')
 
         # traj stat to add
         traj_stat_cols = ['nb_short_weak_decrease',
@@ -244,6 +253,9 @@ class CustomDescriber1(ProductDescriberInterface):
     """Update variables of trajectory when we got the start and the end of the said traj"""
 
     def update_end_trajectory_variables(self, trajectory, end_tick_index, previous_sma3):
+
+        self.logger.debug('entering update_end_trajectory_variables(...)')
+
         # set directional coefficient of the trajectory
         trajectory['end_tick'] = end_tick_index
         trajectory['end_price'] = previous_sma3
@@ -300,6 +312,8 @@ class CustomDescriber1(ProductDescriberInterface):
     def update_power_ratio_for_currency_pair_dict(self, currency_pair_stat_dict, lowest_price, highest_price, Q1,
                                                   median, Q3):
 
+        self.logger.debug('entering update_power_ratio_for_currency_pair_dict(...)')
+
         # init power ratio
         power_ratio_highestlowest = None
         power_ratio_Q3Q1 = None
@@ -340,6 +354,8 @@ class CustomDescriber1(ProductDescriberInterface):
 
     def update_sma_analysis(self, currency_pair_stat_dict, df_product_historic_rates):
 
+        self.logger.debug('entering update_sma_analysis(...)')
+
         # Add SMA5 and SMA15
         df_product_historic_rates['sma5'] = df_product_historic_rates['close'].rolling(5).mean()
         df_product_historic_rates['sma15'] = df_product_historic_rates['close'].rolling(15).mean()
@@ -354,6 +370,8 @@ class CustomDescriber1(ProductDescriberInterface):
         currency_pair_stat_dict['pct_sma15_under_sma5'] = pct_sma15_under_sma5
 
     def update_awesome_oscillator_analysis(self, currency_pair_stat_dict, df_product_historic_rates):
+
+        self.logger.debug('entering update_awesome_oscillator_analysis(...)')
 
         # Init a col y = 0
         df_product_historic_rates['zero'] = 0
@@ -375,6 +393,8 @@ class CustomDescriber1(ProductDescriberInterface):
         currency_pair_stat_dict['pct_ao_under_zero'] = pct_ao_under_zero
 
     def update_chaikin_money_flow_analysis(self, currency_pair_stat_dict, df_product_historic_rates):
+
+        self.logger.debug('entering update_chaikin_money_flow_analysis(...)')
 
         # Init a col y = 0
         df_product_historic_rates['zero'] = 0
@@ -398,6 +418,8 @@ class CustomDescriber1(ProductDescriberInterface):
 
     def update_aroon_analysis(self, currency_pair_stat_dict, df_product_historic_rates):
 
+        self.logger.debug('entering update_aroon_analysis(...)')
+
         # Get aroon up
         df_product_historic_rates['aroon_up'] = ta.trend.AroonIndicator(close=df_product_historic_rates['close'],
                                                                         window=15).aroon_up()
@@ -416,6 +438,9 @@ class CustomDescriber1(ProductDescriberInterface):
         currency_pair_stat_dict['pct_aroonup_under_aroondown'] = pct_aroonup_under_aroondown
 
     def get_pct_crossover_and_pct_factor1_overunder(self, factor_one, factor_two, df_product_historic_rates):
+
+        self.logger.debug('entering get_pct_crossover_and_pct_factor1_overunder(...)')
+
         # returned value
         pct_crossover = 0
         pct_factor1_over = 0
@@ -464,6 +489,8 @@ class CustomDescriber1(ProductDescriberInterface):
 
     def update_bollinger_pct_bands(self, currency_pair_stat_dict, df_product_historic_rates):
 
+        self.logger.debug('entering update_bollinger_pct_bands(...)')
+
         # Add Bollinger pct bands
         df_product_historic_rates['bollinger_pct_bands'] = ta.volatility.BollingerBands(
             close=df_product_historic_rates['close'],
@@ -498,6 +525,8 @@ class CustomDescriber1(ProductDescriberInterface):
 
     def update_global_trending_with_sma15(self, currency_pair_stat_dict, df_product_historic_rates):
 
+        self.logger.debug('entering update_global_trending_with_sma15(...)')
+
         # Get sma15
         df_product_historic_rates['sma15'] = df_product_historic_rates['close'].rolling(15).mean()
 
@@ -507,6 +536,8 @@ class CustomDescriber1(ProductDescriberInterface):
         sma_end = df_product_historic_rates.iloc[-1]['sma15']
 
         # Calculate pct increase or decrease of price
+        self.logger.debug('calculate sma15_trend as : (sma_end - sma_start) / sma_start')
+        self.logger.debug('with sma_start : ' + str(sma_start) + ' and sma_end : ' + str(sma_end))
         pct_global_sma15_trend = (sma_end - sma_start) / sma_start
 
         # Update stat of currency pair

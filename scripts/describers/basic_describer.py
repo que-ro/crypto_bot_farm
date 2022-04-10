@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 import math
 import numpy as np
 import pandas as pd
+import logging
 
 class BasicDescriber(ProductDescriberInterface):
 
-    def __init__(self, date_start: datetime, granularity: int, quote_currency: str):
+    def __init__(self, date_start: datetime, granularity: int, quote_currency: str, log_lvl=logging.INFO):
         #if granularity = 300
         self.time_needed_for_process = timedelta(hours=15)
         self.date_start = date_start
