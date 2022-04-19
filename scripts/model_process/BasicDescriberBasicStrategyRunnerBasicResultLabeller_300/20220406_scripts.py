@@ -91,7 +91,7 @@ model.compile(loss='binary_crossentropy',
               metrics=["accuracy"])
 
 #Train the model
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=15)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor='accuracy', patience=15)
 history_training = model.fit(X_train, y_train,
                              epochs = 10000,
                              class_weight={i : class_weights[i] for i in range(0,2)},
