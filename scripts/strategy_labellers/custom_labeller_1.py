@@ -1,4 +1,4 @@
-from interfaces import StrategyResultLabellerInterface
+from scripts.interfaces import StrategyResultLabellerInterface
 import numpy as np
 
 class CustomLabeller1(StrategyResultLabellerInterface):
