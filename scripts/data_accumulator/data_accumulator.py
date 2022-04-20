@@ -44,7 +44,7 @@ class DataAccumulator():
             self.granularity) + '_dataframe.tsv'
 
         #Constant that should be written somewhere centralized
-        self.DATA_FOLDER_PATH = os.path.join(os.getcwd(), '..', 'data')
+        self.DATA_FOLDER_PATH = os.path.join(os.getcwd(), '../..', 'data')
         self.DESCRIBER_DATA_FOLDER_PATH = os.path.join(self.DATA_FOLDER_PATH, 'describer')
 
         #Variables used during the process

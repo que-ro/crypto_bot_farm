@@ -38,7 +38,7 @@ class Granularity300s60HDescriber(ProductDescriberInterface):
         assert granularity == 300, 'Only 300s intervals are supported at the moment'
 
         # if granylarity = 300:
-        return timedelta(hours=15)
+        return timedelta(hours=60)
 
     @staticmethod
     def get_name() -> str:
