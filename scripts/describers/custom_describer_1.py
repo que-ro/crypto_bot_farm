@@ -1,14 +1,14 @@
 import os.path
 
-from interfaces import ProductDescriberInterface
-from utilities.utils_df_product_historic_rates import UtilsDfProductHistoricRates
+from scripts.interfaces import ProductDescriberInterface
+from scripts.utilities.utils_df_product_historic_rates import UtilsDfProductHistoricRates
 from datetime import datetime, timedelta
 import cbpro
 import math
 import pandas as pd
 import ta
 import logging
-from utilities.utils_logger import UtilitiesLogger
+from scripts.utilities.utils_logger import UtilitiesLogger
 import warnings
 import numpy as np
 

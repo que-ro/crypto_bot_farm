@@ -1,9 +1,9 @@
-from interfaces import StrategyRunnerInterface
+from scripts.interfaces import StrategyRunnerInterface
 from datetime import datetime, timedelta
-from utilities.utils_df_product_historic_rates import UtilsDfProductHistoricRates
+from scripts.utilities.utils_df_product_historic_rates import UtilsDfProductHistoricRates
 import matplotlib.pyplot as plt
 import logging
-from utilities.utils_logger import UtilitiesLogger
+from scripts.utilities.utils_logger import UtilitiesLogger
 
 class CustomStrategy1Runner(StrategyRunnerInterface):
 
