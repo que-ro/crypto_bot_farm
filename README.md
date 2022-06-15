@@ -9,5 +9,7 @@ The strategy is for a currency pair:
   - Take a range time after the previous one and simulate strategy
   - Label the success or failure of the strategy
   - Having a label and features, analyze with deep or machine learning
+  - Select model that has more than 0.55 - 0.6 accuracy (Never happened)
+  - Create crypto bot using the model
 
 (At the moment working on a data accumulator able to store volume of bids and asks for a next tentative using deep reinforcement learning)
