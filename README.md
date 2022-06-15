@@ -1,5 +1,5 @@
 # crypto_bot_farm
-Dream of being financially free and or just greedy? Let's go!
+Dream of being financially free or just greedy? Let's go!
 This project is a miserable tentative of using machine learning without proper experience in the field.
 Have a strategy in mind? Let's code it and see in which kind of price history it grows the best.
 
